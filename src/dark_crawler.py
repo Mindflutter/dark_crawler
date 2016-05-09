@@ -12,12 +12,19 @@ soup = BeautifulSoup(resp.text, 'html.parser')
 
 letter_urls = [DARK_URL + x.get('href') for x in soup.find_all('a', href=True)[3:30]]
 
-# print letter_urls
+print letter_urls
 
 resp_letter = requests.get(letter_urls[0])
 # print resp_letter.text
 soup_a = BeautifulSoup(resp_letter.text, 'html.parser')
 # print soup_a.find_all('a', href=True)
 band_urls = [x.get('href') for x in soup_a.find_all('a', href=True) if x.get('href').startswith('a/')]
-print band_urls
+print sorted(band_urls)
 print len(band_urls)
+
+single_band_url = DARK_URL + '/' + band_urls[666]
+print single_band_url
+
+r = requests.get(single_band_url)
+soup_single = BeautifulSoup(r.text, 'html.parser')
+print soup_single
