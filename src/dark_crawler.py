@@ -1,5 +1,5 @@
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag, NavigableString
 
 
 DARK_URL = 'http://darklyrics.com'
@@ -28,3 +28,20 @@ print single_band_url
 r = requests.get(single_band_url)
 soup_single = BeautifulSoup(r.text, 'html.parser')
 print soup_single
+
+
+def get_single_album_lyrics(album_url):
+    res = requests.get('http://www.darklyrics.com/lyrics/amederia/sometimeswehavewings.html#1')
+    parsed_page = BeautifulSoup(res.text, 'html.parser')
+    # TODO: parse it further using regex (now looks like u'album: "Sometimes We Have Wings" (2008)')
+    album_title_raw = parsed_page('h2')[0].get_text()
+    lyrics = parsed_page.findChildren('div', {'class': 'lyrics'})[0]
+    songs = []
+    for item in lyrics.contents:
+        if isinstance(item, Tag) and item.name == 'h3':
+            # FIXME: extract() modifies list on the fly
+            songs.append({item.extract().get_text(): []})
+
+    return songs
+
+# print get_single_album_lyrics('')
