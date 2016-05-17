@@ -40,7 +40,10 @@ def get_single_album_lyrics(album_url):
     for item in lyrics.contents:
         if isinstance(item, Tag) and item.name == 'h3':
             # FIXME: extract() modifies list on the fly
-            songs[item.extract().get_text()] = []
+            song_title = item.extract().get_text()
+            songs[song_title] = []
+        if isinstance(item, NavigableString) and item != '\n':
+            songs[song_title].append(item.strip('\r'))
 
     return songs
 
