@@ -10,7 +10,7 @@ resp = requests.get(DARK_URL)
 
 soup = BeautifulSoup(resp.text, 'html.parser')
 
-letter_urls = [DARK_URL + x.get('href') for x in soup.find_all('a', href=True)[3:30]]
+letter_urls = ['{0}{1}'.format(DARK_URL, x.get('href')) for x in soup.find_all('a', href=True)[3:30]]
 
 print letter_urls
 
@@ -18,11 +18,11 @@ resp_letter = requests.get(letter_urls[0])
 # print resp_letter.text
 soup_a = BeautifulSoup(resp_letter.text, 'html.parser')
 # print soup_a.find_all('a', href=True)
-band_urls = [x.get('href') for x in soup_a.find_all('a', href=True) if x.get('href').startswith('a/')]
-print sorted(band_urls)
+band_urls = sorted([('/{0}'.format(x.get('href')), x.get_text()) for x in soup_a.find_all('a', href=True)
+                    if x.get('href').startswith('a/')])
 print len(band_urls)
 
-single_band_url = DARK_URL + '/' + band_urls[666]
+single_band_url = '{0}{1}'.format(DARK_URL, band_urls[666][0])
 print single_band_url
 
 r = requests.get(single_band_url)
@@ -36,12 +36,12 @@ def get_single_album_lyrics(album_url):
     # TODO: parse it further using regex (now looks like u'album: "Sometimes We Have Wings" (2008)')
     album_title_raw = parsed_page('h2')[0].get_text()
     lyrics = parsed_page.findChildren('div', {'class': 'lyrics'})[0]
-    songs = []
+    songs = {}
     for item in lyrics.contents:
         if isinstance(item, Tag) and item.name == 'h3':
             # FIXME: extract() modifies list on the fly
-            songs.append({item.extract().get_text(): []})
+            songs[item.extract().get_text()] = []
 
     return songs
 
-# print get_single_album_lyrics('')
+print get_single_album_lyrics('')
