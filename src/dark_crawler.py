@@ -44,7 +44,12 @@ def get_single_album_lyrics(album_url):
             songs[song_title] = []
         if isinstance(item, NavigableString) and item != '\n':
             songs[song_title].append(item.strip('\r'))
+    result_docs = []
+    for song, lyrics_list in songs.iteritems():
+        # TODO: parse title to get track number
+        song_doc = {'artist': 'GET_ARTIST', 'album': album_title_raw, 'title': song, 'lyrics': ''.join(lyrics_list)}
+        result_docs.append(song_doc)
 
-    return songs
+    return result_docs
 
-print get_single_album_lyrics('')
+print(get_single_album_lyrics(''))
