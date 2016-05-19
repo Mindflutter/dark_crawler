@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup, Tag, NavigableString
+from urlparse import urljoin
 
 
 DARK_URL = 'http://darklyrics.com'
@@ -10,7 +11,7 @@ resp = requests.get(DARK_URL)
 
 soup = BeautifulSoup(resp.text, 'html.parser')
 
-letter_urls = ['{0}{1}'.format(DARK_URL, x.get('href')) for x in soup.find_all('a', href=True)[3:30]]
+letter_urls = [urljoin(DARK_URL, x.get('href')) for x in soup.find_all('a')[3:30]]
 
 print letter_urls
 
@@ -18,20 +19,27 @@ resp_letter = requests.get(letter_urls[0])
 # print resp_letter.text
 soup_a = BeautifulSoup(resp_letter.text, 'html.parser')
 # print soup_a.find_all('a', href=True)
-band_urls = sorted([('/{0}'.format(x.get('href')), x.get_text()) for x in soup_a.find_all('a', href=True)
+band_urls = sorted([(x.get('href'), x.get_text()) for x in soup_a.find_all('a', href=True)
                     if x.get('href').startswith('a/')])
 print len(band_urls)
 
-single_band_url = '{0}{1}'.format(DARK_URL, band_urls[666][0])
+single_band_url = urljoin(DARK_URL, band_urls[666][0])
 print single_band_url
 
-r = requests.get(single_band_url)
-soup_single = BeautifulSoup(r.text, 'html.parser')
-print soup_single
+
+def get_album_urls(single_band_url):
+    res = requests.get('http://darklyrics.com/a/ayreon.html')
+    soup_single = BeautifulSoup(res.text, 'html.parser')
+    albums = soup_single.findAll('div', {'class': 'album'})
+    album_urls = []
+    for album_info in albums:
+        # url to the first song on album leads to the page with all album songs
+        album_urls.append(urljoin('http://darklyrics.com/a/ayreon.html', album_info.find('a').get('href')))
+    return album_urls
 
 
 def get_single_album_lyrics(album_url):
-    res = requests.get('http://www.darklyrics.com/lyrics/amederia/sometimeswehavewings.html#1')
+    res = requests.get(album_url)
     parsed_page = BeautifulSoup(res.text, 'html.parser')
     # TODO: parse it further using regex (now looks like u'album: "Sometimes We Have Wings" (2008)')
     album_title_raw = parsed_page('h2')[0].get_text()
@@ -52,4 +60,6 @@ def get_single_album_lyrics(album_url):
 
     return result_docs
 
-print(get_single_album_lyrics(''))
+# for i in get_album_urls(''):
+#     print(get_single_album_lyrics(i))
+# print(get_album_urls(''))
