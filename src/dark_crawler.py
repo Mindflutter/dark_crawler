@@ -1,4 +1,5 @@
 import requests
+import re
 from bs4 import BeautifulSoup, Tag, NavigableString
 from urlparse import urljoin
 
@@ -55,12 +56,25 @@ def get_single_album_lyrics(album_url):
         if isinstance(item, NavigableString) and item != '\n':
             songs[song_title].append(item.strip('\r'))
     result_docs = []
+    album, year = parse_album_raw(album_title_raw)
     for song, lyrics_list in songs.iteritems():
         # TODO: parse title to get track number
-        song_doc = {'artist': 'GET_ARTIST', 'album': album_title_raw, 'title': song, 'lyrics': ''.join(lyrics_list)}
+        song_doc = {'artist': 'GET_ARTIST', 'album': album, 'year': year, 'title': song, 'lyrics': ''.join(lyrics_list)}
         result_docs.append(song_doc)
 
     return result_docs
+
+
+def parse_album_raw(album_title_raw):
+    match = re.match('.*"(.*?)" \((\d+)', album_title_raw)
+    if match:
+        album = match.group(1)
+        year = match.group(2)
+    else:
+        album = album_title_raw
+        year = ''
+    return album, year
+
 
 for i in get_album_urls(''):
     print(get_single_album_lyrics(i))
