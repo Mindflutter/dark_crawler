@@ -14,7 +14,7 @@ soup = BeautifulSoup(resp.text, 'html.parser')
 # get list of tuples (URL, prefix)
 letter_urls = [(urljoin(DARK_URL, x.get('href')), x.get('href').replace('.html', '').strip('/') + '/') for x in soup.find_all('a')[3:30]]
 
-print letter_urls
+# print letter_urls
 
 
 def get_band_urls(letter_url, prefix):
@@ -49,6 +49,9 @@ def get_single_album_lyrics(album_url):
             # FIXME: extract() modifies list on the fly
             song_title = item.extract().get_text()
             songs[song_title] = []
+        # Annotations in italics
+        if isinstance(item, Tag) and item.name == 'i':
+            songs[song_title].append('\n' + item.get_text())
         if isinstance(item, NavigableString) and item != '\n':
             songs[song_title].append(item.strip('\r'))
     result_docs = []
@@ -59,10 +62,11 @@ def get_single_album_lyrics(album_url):
 
     return result_docs
 
-# for i in get_album_urls(''):
-#     print(get_single_album_lyrics(i))
-# print(get_album_urls(''))
+for i in get_album_urls(''):
+    print(get_single_album_lyrics(i))
 
-for i in letter_urls:
-    print(get_band_urls(i[0], i[1]))
+# print(get_album_urls(''))
+#
+# for i in letter_urls:
+#     print(get_band_urls(i[0], i[1]))
 
