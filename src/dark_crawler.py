@@ -3,7 +3,7 @@ import time
 import logging
 from bs4 import BeautifulSoup, Tag, NavigableString
 from urlparse import urljoin
-from helpers import parse_album_raw
+from helpers import parse_album_raw, parse_track_title
 
 
 class DarkCrawler(object):
@@ -28,10 +28,9 @@ class DarkCrawler(object):
         resp_letter = self.session.get(letter_url)
         soup_letter = BeautifulSoup(resp_letter.text, 'html.parser')
         # get list of tuples (partial URL, band name)
-        band_urls = sorted([(urljoin(self.DARK_URL, item.get('href')), item.get_text())
-                            for item in soup_letter.find_all('a', href=True)
-                            if item.get('href').startswith(prefix)])
-        return band_urls
+        return sorted([(urljoin(self.DARK_URL, item.get('href')), item.get_text())
+                       for item in soup_letter.find_all('a', href=True)
+                       if item.get('href').startswith(prefix)])
 
     def get_album_urls(self, single_band_url):
         res = self.session.get(single_band_url)
@@ -62,8 +61,9 @@ class DarkCrawler(object):
         result_docs = []
         album, year = parse_album_raw(album_title_raw)
         for song, lyrics_list in songs.iteritems():
-            # TODO: parse title to get track number
-            song_doc = {'artist': artist, 'album': album, 'year': year, 'title': song, 'lyrics': ''.join(lyrics_list)}
+            track_number, track_title = parse_track_title(song)
+            song_doc = {'artist': artist, 'album': album, 'year': year, 'track_number': track_number,
+                        'track_title': track_title, 'lyrics': ''.join(lyrics_list)}
             result_docs.append(song_doc)
         return result_docs
 

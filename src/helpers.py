@@ -5,8 +5,19 @@ def parse_album_raw(album_title_raw):
     match = re.match('.*"(.*?)" \((\d+)', album_title_raw)
     if match:
         album = match.group(1)
-        year = match.group(2)
+        year = int(match.group(2))
     else:
         album = album_title_raw
-        year = ''
+        year = 0
     return album, year
+
+
+def parse_track_title(track_title_raw):
+    match = re.match('(\d+)\. (.*)', track_title_raw)
+    if match:
+        track_number = int(match.group(1))
+        track_title = match.group(2)
+    else:
+        track_number = 0
+        track_title = track_title_raw
+    return track_number, track_title
