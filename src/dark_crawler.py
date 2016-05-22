@@ -3,6 +3,8 @@ import time
 import logging
 from bs4 import BeautifulSoup, Tag, NavigableString
 from urlparse import urljoin
+from elasticsearch import Elasticsearch
+
 from helpers import parse_album_raw, parse_track_title
 
 
@@ -15,6 +17,7 @@ class DarkCrawler(object):
                             level=logging.INFO)
         self.logger = logging.getLogger('DARK_CRAWLER')
         self.session = requests.Session()
+        self.es_client = Elasticsearch([{'host': 'localhost', 'port': 9200}])
 
     def get_letter_urls(self):
         resp = self.session.get(self.DARK_URL)
@@ -76,7 +79,9 @@ class DarkCrawler(object):
                 self.logger.info('Processing band {0}'.format(band_url[1]))
                 album_urls = self.get_album_urls(band_url[0])
                 for album_url in album_urls:
-                    print(self.get_single_album_lyrics(album_url, band_url[1]))
+                    self.logger.info('Indexing album {0}'.format(album_url))
+                    for doc in self.get_single_album_lyrics(album_url, band_url[1]):
+                        self.es_client.index(index='metal', doc_type='track', body=doc)
                     time.sleep(5)
 
 
