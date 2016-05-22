@@ -62,8 +62,9 @@ class DarkCrawler(object):
         album, year = parse_album_raw(album_title_raw)
         for song, lyrics_list in songs.iteritems():
             track_number, track_title = parse_track_title(song)
-            song_doc = {'artist': artist, 'album': album, 'year': year, 'track_number': track_number,
-                        'track_title': track_title, 'lyrics': ''.join(lyrics_list)}
+            song_doc = {'artist': artist.encode('latin1'), 'album': album.encode('latin1'),
+                        'year': year, 'track_number': track_number, 'track_title': track_title.encode('latin1'),
+                        'lyrics': ''.join(lyrics_list).encode('latin1')}
             result_docs.append(song_doc)
         return result_docs
 
