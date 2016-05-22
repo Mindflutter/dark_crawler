@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup, Tag, NavigableString
 from urlparse import urljoin
 from elasticsearch import Elasticsearch
 
-from helpers import parse_album_raw, parse_track_title
+from helpers import parse_album_raw, parse_track_title, try_n_pass
 
 
 class DarkCrawler(object):
@@ -48,6 +48,7 @@ class DarkCrawler(object):
             album_urls.append(urljoin(single_band_url, album_info.find('a').get('href')))
         return album_urls
 
+    @try_n_pass
     def get_single_album_lyrics(self, album_url, artist):
         res = self.session.get(album_url)
         parsed_page = BeautifulSoup(res.text, 'html.parser')
@@ -79,17 +80,21 @@ class DarkCrawler(object):
         for letter_url in letter_urls:
             band_urls = self.get_band_urls(letter_url[0], letter_url[1])
             for band_url in band_urls:
-                self.logger.info('Processing band {0}'.format(band_url[1]))
+                self.logger.info('Processing band {0}'.format(band_url[1].encode('latin1')))
                 album_urls = self.get_album_urls(band_url[0])
                 for album_url in album_urls:
                     self.logger.info('Indexing album {0}'.format(album_url))
-                    for doc in self.get_single_album_lyrics(album_url, band_url[1]):
-                        try:
-                            self.es_client.index(index='metal', doc_type='track', body=doc)
-                        except Exception as error:
-                            self.logger.error("Indexing error {0} for document {1}".format(error, doc))
-                            continue
-                    time.sleep(5)
+                    docs = self.get_single_album_lyrics(album_url, band_url[1])
+                    if docs:
+                        for doc in docs:
+                            try:
+                                self.es_client.index(index='metal', doc_type='track', body=doc)
+                            except Exception as error:
+                                self.logger.error('Indexing error {0} for document {1}'.format(error, doc))
+                                continue
+                        time.sleep(5)
+                    else:
+                        self.logger.error('Parsing lyrics for album {0} failed'.format(album_url))
 
 
 def main():

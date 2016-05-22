@@ -21,3 +21,14 @@ def parse_track_title(track_title_raw):
         track_number = 0
         track_title = track_title_raw
     return track_number, track_title
+
+
+def try_n_pass(func):
+    def wrapped(*args, **kwargs):
+        try:
+            result = func(*args, **kwargs)
+        except Exception:
+            # TODO: log what failed
+            result = None
+        return result
+    return wrapped
