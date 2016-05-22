@@ -14,9 +14,10 @@ class DarkCrawler(object):
         logging.basicConfig(filename='dark_crawler.log', format='%(asctime)s %(name)s %(levelname)s %(message)s',
                             level=logging.INFO)
         self.logger = logging.getLogger('DARK_CRAWLER')
+        self.session = requests.Session()
 
     def get_letter_urls(self):
-        resp = requests.get(self.DARK_URL)
+        resp = self.session.get(self.DARK_URL)
         soup = BeautifulSoup(resp.text, 'html.parser')
 
         # get list of tuples (URL, prefix)
@@ -24,7 +25,7 @@ class DarkCrawler(object):
                 for x in soup.find_all('a')[3:30]]
 
     def get_band_urls(self, letter_url, prefix):
-        resp_letter = requests.get(letter_url)
+        resp_letter = self.session.get(letter_url)
         soup_letter = BeautifulSoup(resp_letter.text, 'html.parser')
         # get list of tuples (partial URL, band name)
         band_urls = sorted([(urljoin(self.DARK_URL, item.get('href')), item.get_text())
@@ -33,7 +34,7 @@ class DarkCrawler(object):
         return band_urls
 
     def get_album_urls(self, single_band_url):
-        res = requests.get(single_band_url)
+        res = self.session.get(single_band_url)
         soup_single = BeautifulSoup(res.text, 'html.parser')
         albums = soup_single.findAll('div', {'class': 'album'})
         album_urls = []
@@ -43,7 +44,7 @@ class DarkCrawler(object):
         return album_urls
 
     def get_single_album_lyrics(self, album_url, artist):
-        res = requests.get(album_url)
+        res = self.session.get(album_url)
         parsed_page = BeautifulSoup(res.text, 'html.parser')
         album_title_raw = parsed_page('h2')[0].get_text()
         lyrics = parsed_page.findChildren('div', {'class': 'lyrics'})[0]
