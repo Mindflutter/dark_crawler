@@ -16,6 +16,9 @@ class DarkCrawler(object):
         logging.basicConfig(filename='dark_crawler.log', format='%(asctime)s %(name)s %(levelname)s %(message)s',
                             level=logging.INFO)
         self.logger = logging.getLogger('DARK_CRAWLER')
+        # lower the noisiness
+        logging.getLogger("elasticsearch").setLevel(logging.WARNING)
+
         self.session = requests.Session()
         self.es_client = Elasticsearch([{'host': 'localhost', 'port': 9200}])
 
@@ -81,7 +84,11 @@ class DarkCrawler(object):
                 for album_url in album_urls:
                     self.logger.info('Indexing album {0}'.format(album_url))
                     for doc in self.get_single_album_lyrics(album_url, band_url[1]):
-                        self.es_client.index(index='metal', doc_type='track', body=doc)
+                        try:
+                            self.es_client.index(index='metal', doc_type='track', body=doc)
+                        except Exception as error:
+                            self.logger.error("Indexing error {0} for document {1}".format(error, doc))
+                            continue
                     time.sleep(5)
 
 
