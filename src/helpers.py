@@ -1,4 +1,5 @@
 import re
+import logging
 
 
 def parse_album_raw(album_title_raw):
@@ -25,10 +26,13 @@ def parse_track_title(track_title_raw):
 
 def try_n_pass(func):
     def wrapped(*args, **kwargs):
+        logging.basicConfig(filename='decorator_exceptions.log',
+                            format='%(asctime)s %(name)s %(levelname)s %(message)s')
+        log = logging.getLogger(func.__name__)
         try:
             result = func(*args, **kwargs)
-        except Exception:
-            # TODO: log what failed
+        except Exception as error:
+            log.error("Exception caught in method: {0}".format(error))
             result = None
         return result
     return wrapped
