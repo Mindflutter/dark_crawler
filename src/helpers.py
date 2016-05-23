@@ -1,8 +1,15 @@
+""" Various helper functions. """
 import re
 import logging
 
 
 def parse_album_raw(album_title_raw):
+    """ Parse raw album title into a sensible title and year.
+    Args:
+        album_title_raw (str): raw album info string.
+    Returns:
+        tuple (str, int): (album, year).
+    """
     match = re.match('.*"(.*?)" \((\d+)', album_title_raw)
     if match:
         album = match.group(1)
@@ -14,6 +21,12 @@ def parse_album_raw(album_title_raw):
 
 
 def parse_track_title(track_title_raw):
+    """ Parse raw track title into a sensible track number and title.
+    Args:
+        track_title_raw (str): raw track info string.
+    Returns:
+        tuple (int, str): (number, title).
+    """
     match = re.match('(\d+)\. (.*)', track_title_raw)
     if match:
         track_number = int(match.group(1))
@@ -25,6 +38,11 @@ def parse_track_title(track_title_raw):
 
 
 def try_n_pass(func):
+    """ Decorator for catching and logging a possible exception within a function
+    that might cause a process to crash.
+    Returns:
+        Function result if no exception was caught. None otherwise.
+    """
     def wrapped(*args, **kwargs):
         logging.basicConfig(filename='decorator_exceptions.log',
                             format='%(asctime)s %(name)s %(levelname)s %(message)s')
