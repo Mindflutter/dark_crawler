@@ -1,0 +1,7 @@
+# [DARK_CRAWLER]
+dark_url: http://darklyrics.com
+logfile: dark_crawler.log
+elasticsearch_host: localhost
+elasticsearch_port: 9200
+index: metal
+doc_type: track

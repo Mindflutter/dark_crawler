@@ -1,6 +1,7 @@
 import requests
 import time
 import logging
+import yaml
 from bs4 import BeautifulSoup, Tag, NavigableString
 from urlparse import urljoin
 from elasticsearch import Elasticsearch
@@ -10,31 +11,32 @@ from helpers import parse_album_raw, parse_track_title, try_n_pass
 
 class DarkCrawler(object):
 
-    DARK_URL = 'http://darklyrics.com'
-
-    def __init__(self):
-        logging.basicConfig(filename='dark_crawler.log', format='%(asctime)s %(name)s %(levelname)s %(message)s',
+    def __init__(self, config):
+        self.dark_url = config['dark_url']
+        logging.basicConfig(filename=config['logfile'], format='%(asctime)s %(name)s %(levelname)s %(message)s',
                             level=logging.INFO)
         self.logger = logging.getLogger('DARK_CRAWLER')
         # lower the noisiness
         logging.getLogger("elasticsearch").setLevel(logging.WARNING)
 
         self.session = requests.Session()
-        self.es_client = Elasticsearch([{'host': 'localhost', 'port': 9200}])
+        self.es_client = Elasticsearch([{'host': config['elasticsearch_host'], 'port': config['elasticsearch_port']}])
+        self.index = config['index']
+        self.doc_type = config['doc_type']
 
     def get_letter_urls(self):
-        resp = self.session.get(self.DARK_URL)
+        resp = self.session.get(self.dark_url)
         soup = BeautifulSoup(resp.text, 'html.parser')
 
         # get list of tuples (URL, prefix)
-        return [(urljoin(self.DARK_URL, x.get('href')), x.get('href').replace('.html', '').strip('/') + '/')
+        return [(urljoin(self.dark_url, x.get('href')), x.get('href').replace('.html', '').strip('/') + '/')
                 for x in soup.find_all('a')[3:30]]
 
     def get_band_urls(self, letter_url, prefix):
         resp_letter = self.session.get(letter_url)
         soup_letter = BeautifulSoup(resp_letter.text, 'html.parser')
         # get list of tuples (partial URL, band name)
-        return sorted([(urljoin(self.DARK_URL, item.get('href')), item.get_text())
+        return sorted([(urljoin(self.dark_url, item.get('href')), item.get_text())
                        for item in soup_letter.find_all('a', href=True)
                        if item.get('href').startswith(prefix)])
 
@@ -88,7 +90,7 @@ class DarkCrawler(object):
                     if docs:
                         for doc in docs:
                             try:
-                                self.es_client.index(index='metal', doc_type='track', body=doc)
+                                self.es_client.index(index=self.index, doc_type=self.doc_type, body=doc)
                             except Exception as error:
                                 self.logger.error('Indexing error {0} for document {1}'.format(error, doc))
                                 continue
@@ -98,7 +100,10 @@ class DarkCrawler(object):
 
 
 def main():
-    dark_crawler = DarkCrawler()
+    with open('../resources/dark_crawler.yml') as conf_file:
+        config = yaml.safe_load(conf_file)
+
+    dark_crawler = DarkCrawler(config)
     dark_crawler.process()
 
 
