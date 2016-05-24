@@ -2,6 +2,7 @@ import requests
 import time
 import logging
 import yaml
+import os
 from bs4 import BeautifulSoup, Tag, NavigableString
 from urlparse import urljoin
 from elasticsearch import Elasticsearch
@@ -131,7 +132,8 @@ class DarkCrawler(object):
 
 def main():
     """ Entry point. """
-    with open('../resources/dark_crawler.yml') as conf_file:
+    conf_file_location = os.path.abspath(os.path.join(os.path.dirname(__file__), "../resources/dark_crawler.yml"))
+    with open(conf_file_location) as conf_file:
         config = yaml.safe_load(conf_file)
 
     dark_crawler = DarkCrawler(config)
